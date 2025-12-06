@@ -1,0 +1,7 @@
+build/
+.vscode/
+app.db
+*.exe
+*.o
+*.obj
+.cache

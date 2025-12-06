@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Alumno - UCO</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Panel de Alumno</h1>
+        <button onclick="logout()">Cerrar Sesion</button>
+    </header>
+    <div class="container">
+        <!-- HU3.1 -->
+        <div class="section">
+            <h2>Chat con mi Tutor (HU3.1)</h2>
+            <div id="tutorInfo">Cargando info tutor...</div>
+            <div id="chatWindow" class="chat-window"></div>
+            <input type="text" id="msgInput" placeholder="Escribe a tu tutor...">
+            <button onclick="sendMsg()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        let myId = parseInt(localStorage.getItem('userId'));
+        let myTutorId = null;
+
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+
+        // We need to fetch who is my tutor. We can reuse the users API or make a specific one.
+        // For simplicity, we'll scan the users list or add a "me" endpoint. 
+        // Let's use the users list filtered locally for this demo MVP.
+        async function getMyTutor() {
+            const res = await fetch('/api/users');
+            const data = await res.json();
+            if (data.alumnos) {
+                const me = data.alumnos.find(a => a.id === myId);
+                if (me && me.tutorId !== -1) {
+                    myTutorId = me.tutorId;
+                    const tutorName = data.tutors.find(t => t.id === myTutorId)?.nombre || "Desconocido";
+                    document.getElementById('tutorInfo').innerText = "Tu Tutor asignado es: " + tutorName;
+                    loadChat();
+                } else {
+                    document.getElementById('tutorInfo').innerText = "No tienes tutor asignado aun.";
+                }
+            }
+        }
+
+        async function loadChat() {
+            if (!myTutorId) return;
+            const res = await fetch(`/api/chat/history?u1=${myId}&u2=${myTutorId}`);
+            const data = await res.json();
+            const div = document.getElementById('chatWindow');
+            div.innerHTML = '';
+            if (data.msgs) {
+                data.msgs.forEach(m => {
+                    const style = m.from === myId ? 'text-align:right; background:#dcf8c6;' : 'background:#fff;';
+                    div.innerHTML += `<div class="msg" style="${style} padding:5px; margin:2px;">
+                         <b>${m.from === myId ? 'Yo' : 'Tutor'}:</b> ${m.content}
+                    </div>`;
+                });
+                div.scrollTop = div.scrollHeight;
+            }
+        }
+
+        async function sendMsg() {
+            const txt = document.getElementById('msgInput').value;
+            if (!txt || !myTutorId) return;
+
+            await fetch('/api/chat/send', {
+                method: 'POST',
+                body: JSON.stringify({ from: myId, to: myTutorId, content: txt })
+            });
+            document.getElementById('msgInput').value = '';
+            loadChat();
+        }
+
+        setInterval(loadChat, 3000);
+        getMyTutor();
+    </script>
+</body>
+
+</html>

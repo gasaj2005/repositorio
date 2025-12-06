@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Tutor - UCO</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Panel de Tutor</h1>
+        <button onclick="logout()">Cerrar Sesion</button>
+    </header>
+    <div class="container">
+        <!-- HU1.3 & HU2.3 -->
+        <div class="section">
+            <h2>Mis Alumnos (HU1.3)</h2>
+            <div id="notifs" style="color:blue;"></div>
+            <table id="stuTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Carrera</th>
+                        <th>Accion</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- HU3.2 -->
+        <div class="section">
+            <h2>Chat con Alumno (HU3.2)</h2>
+            <h3 id="chatWith">Seleccione un alumno</h3>
+            <div id="chatWindow" class="chat-window"></div>
+            <input type="text" id="msgInput" placeholder="Escribe un mensaje...">
+            <button onclick="sendMsg()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        let myId = parseInt(localStorage.getItem('userId'));
+        let currentStudentId = null;
+
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+
+        async function loadStudents() {
+            const res = await fetch(`/api/tutor/${myId}/students`);
+            const data = await res.json();
+            const tbody = document.querySelector('#stuTable tbody');
+            tbody.innerHTML = '';
+            if (data.students) {
+                data.students.forEach(s => {
+                    // Simple "notification" check if new (mock logic)
+                    tbody.innerHTML += `<tr>
+                        <td>${s.id}</td>
+                        <td>${s.nombre}</td>
+                        <td>${s.carrera}</td>
+                        <td><button onclick="openChat(${s.id}, '${s.nombre}')">Chat</button></td>
+                    </tr>`;
+                });
+            }
+        }
+
+        function openChat(sid, name) {
+            currentStudentId = sid;
+            document.getElementById('chatWith').innerText = "Chat con " + name;
+            loadChat();
+        }
+
+        async function loadChat() {
+            if (!currentStudentId) return;
+            const res = await fetch(`/api/chat/history?u1=${myId}&u2=${currentStudentId}`);
+            const data = await res.json();
+            const div = document.getElementById('chatWindow');
+            div.innerHTML = '';
+            if (data.msgs) {
+                data.msgs.forEach(m => {
+                    const cls = m.from === myId ? 'sentUser' : 'receivedUser';
+                    const style = m.from === myId ? 'text-align:right; background:#e1ffc7;' : 'background:#fff;';
+                    div.innerHTML += `<div class="msg" style="${style} padding:5px; margin:2px;">
+                        <b>${m.from === myId ? 'Yo' : 'Alumno'}:</b> ${m.content}
+                    </div>`;
+                });
+                div.scrollTop = div.scrollHeight;
+            }
+        }
+
+        async function sendMsg() {
+            const txt = document.getElementById('msgInput').value;
+            if (!txt || !currentStudentId) return;
+
+            await fetch('/api/chat/send', {
+                method: 'POST',
+                body: JSON.stringify({ from: myId, to: currentStudentId, content: txt })
+            });
+            document.getElementById('msgInput').value = '';
+            loadChat();
+        }
+
+        setInterval(loadChat, 3000); // Poll for msg
+        loadStudents();
+    </script>
+</body>
+
+</html>
