@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <iostream>
 
-
 // Helper for SQL execution (SQLite)
 static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
   return 0;
@@ -27,9 +26,15 @@ Database::~Database() {
 }
 
 bool Database::init() {
+  std::cout << "DEBUG: Database::init() called" << std::endl;
 #ifdef USE_POSTGRES
+  std::cout << "DEBUG: Compiled with USE_POSTGRES" << std::endl;
+  std::cout << "DEBUG: Checking Postgres..." << std::endl;
   const char *dbUrl = std::getenv("DATABASE_URL");
+  std::cout << "DEBUG: DATABASE_URL: " << (dbUrl ? dbUrl : "NULL") << std::endl;
   if (dbUrl) {
+    std::cout << "DEBUG: Found DATABASE_URL, attempting connection..."
+              << std::endl;
     try {
       pg_conn = std::make_unique<pqxx::connection>(dbUrl);
       if (pg_conn->is_open()) {
@@ -82,10 +87,16 @@ bool Database::init() {
       // Fallback (or fail? Let's fail if PG was requested but failed)
       return false;
     }
+  } else {
+    std::cout << "DEBUG: DATABASE_URL environment variable is NOT set or NULL."
+              << std::endl;
   }
   // Fallthrough to SQLite if no ENV var
+#else
+  std::cout << "DEBUG: Compiled WITHOUT USE_POSTGRES" << std::endl;
 #endif
 
+  std::cout << "DEBUG: Falling back to SQLite..." << std::endl;
   int rc = sqlite3_open(dbPath.c_str(), &db);
   if (rc) {
     std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
