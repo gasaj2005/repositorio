@@ -18,7 +18,7 @@ WORKDIR /app/build
 RUN cmake .. && make
 
 # Runner Stage
-FROM ubuntu:22.04
+FROM debian:bookworm-slim
 
 # Install runtime dependencies
 # Crow might need some basic system libraries depending on linking, but usually libc is enough on ubuntu
