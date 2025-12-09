@@ -1,9 +1,14 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
+
+#ifdef USE_POSTGRES
+#include <pqxx/pqxx>
+#endif
+
 // Forward declarations
 struct sqlite3;
 class Usuario;
@@ -11,43 +16,51 @@ class Alumno;
 class Tutor;
 
 struct MensajeChat {
-    int id;
-    int remitenteId;
-    int destinatarioId;
-    std::string contenido;
-    std::string fecha;
+  int id;
+  int remitenteId;
+  int destinatarioId;
+  std::string contenido;
+  std::string fecha;
 };
 
 class Database {
 private:
-    sqlite3* db;
-    std::string dbPath;
+  sqlite3 *db;
+  std::string dbPath;
+
+#ifdef USE_POSTGRES
+  std::unique_ptr<pqxx::connection> pg_conn;
+#endif
 
 public:
-    Database(const std::string& path);
-    ~Database();
+  Database(const std::string &path);
+  ~Database();
 
-    bool init();
+  bool init();
 
-    // User Management
-    bool registrarAlumno(const std::string& nombre, const std::string& apellidos, const std::string& correo, const std::string& pass, const std::string& carrera);
-    bool registrarTutor(const std::string& nombre, const std::string& apellidos, const std::string& correo, const std::string& pass);
-    std::shared_ptr<Usuario> autenticarUsuario(const std::string& correo, const std::string& pass);
-    
-    // Getters
-    std::vector<Alumno> getAllAlumnos();
-    std::vector<Tutor> getAllTutors();
-    std::vector<Alumno> getAlumnosByTutor(int tutorId);
+  // User Management
+  bool registrarAlumno(const std::string &nombre, const std::string &apellidos,
+                       const std::string &correo, const std::string &pass,
+                       const std::string &carrera);
+  bool registrarTutor(const std::string &nombre, const std::string &apellidos,
+                      const std::string &correo, const std::string &pass);
+  std::shared_ptr<Usuario> autenticarUsuario(const std::string &correo,
+                                             const std::string &pass);
 
-    // Assignment
-    bool asignarTutor(int alumnoId, int tutorId);
-    void autoAsignarTutores(); // HU2.1
+  // Getters
+  std::vector<Alumno> getAllAlumnos();
+  std::vector<Tutor> getAllTutors();
+  std::vector<Alumno> getAlumnosByTutor(int tutorId);
 
-    // Chat
-    bool guardarMensaje(int remitenteId, int destinatarioId, const std::string& contenido);
-    std::vector<MensajeChat> getChatHistory(int userId1, int userId2);
-    std::vector<MensajeChat> getAllChats(); // For Coordinator
+  // Assignment
+  bool asignarTutor(int alumnoId, int tutorId);
+  void autoAsignarTutores(); // HU2.1
 
+  // Chat
+  bool guardarMensaje(int remitenteId, int destinatarioId,
+                      const std::string &contenido);
+  std::vector<MensajeChat> getChatHistory(int userId1, int userId2);
+  std::vector<MensajeChat> getAllChats(); // For Coordinator
 };
 
 #endif // DATABASE_H

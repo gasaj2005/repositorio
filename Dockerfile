@@ -1,8 +1,8 @@
 # Build Stage
 FROM gcc:12 as builder
 
-# Install CMake
-RUN apt-get update && apt-get install -y cmake
+# Install CMake and Postgres deps
+RUN apt-get update && apt-get install -y cmake libpq-dev libpqxx-dev
 
 WORKDIR /app
 
@@ -25,6 +25,8 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y \
     libstdc++6 \
     ca-certificates \
+    libpqxx-6.4 \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
