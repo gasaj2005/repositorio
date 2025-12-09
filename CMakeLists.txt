@@ -41,4 +41,7 @@ set(SOURCES
 
 add_executable(Practica4IS ${SOURCES})
 
-target_link_libraries(Practica4IS PRIVATE Crow::Crow ws2_32 mswsock)
+target_link_libraries(Practica4IS PRIVATE Crow::Crow)
+if(WIN32)
+    target_link_libraries(Practica4IS PRIVATE ws2_32 mswsock)
+endif()
