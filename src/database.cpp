@@ -643,3 +643,74 @@ std::vector<MensajeChat> Database::getAllChats() {
   sqlite3_finalize(stmt);
   return msgs;
 }
+
+bool Database::deleteUser(int id) {
+#ifdef USE_POSTGRES
+  if (pg_conn) {
+    try {
+      pqxx::work W(*pg_conn);
+      // Cascade delete manually just in case constraints aren't set to cascade
+      W.exec_params(
+          "DELETE FROM Assignments WHERE TutorID = $1 OR StudentID = $1", id);
+      W.exec_params(
+          "DELETE FROM Messages WHERE RemitenteID = $1 OR DestinatarioID = $1",
+          id);
+      W.exec_params("DELETE FROM Users WHERE ID = $1", id);
+      W.commit();
+      return true;
+    } catch (...) {
+      return false;
+    }
+  }
+#endif
+  // SQLite
+  // Assignments
+  sqlite3_stmt *stmt;
+  std::string sql1 =
+      "DELETE FROM Assignments WHERE TutorID = ? OR StudentID = ?;";
+  sqlite3_prepare_v2(db, sql1.c_str(), -1, &stmt, 0);
+  sqlite3_bind_int(stmt, 1, id);
+  sqlite3_bind_int(stmt, 2, id);
+  sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+
+  // Messages
+  std::string sql2 =
+      "DELETE FROM Messages WHERE RemitenteID = ? OR DestinatarioID = ?;";
+  sqlite3_prepare_v2(db, sql2.c_str(), -1, &stmt, 0);
+  sqlite3_bind_int(stmt, 1, id);
+  sqlite3_bind_int(stmt, 2, id);
+  sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+
+  // User
+  std::string sql3 = "DELETE FROM Users WHERE ID = ?;";
+  sqlite3_prepare_v2(db, sql3.c_str(), -1, &stmt, 0);
+  sqlite3_bind_int(stmt, 1, id);
+  int rc = sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+
+  return rc == SQLITE_DONE;
+}
+
+bool Database::deleteMessage(int id) {
+#ifdef USE_POSTGRES
+  if (pg_conn) {
+    try {
+      pqxx::work W(*pg_conn);
+      W.exec_params("DELETE FROM Messages WHERE ID = $1", id);
+      W.commit();
+      return true;
+    } catch (...) {
+      return false;
+    }
+  }
+#endif
+  sqlite3_stmt *stmt;
+  std::string sql = "DELETE FROM Messages WHERE ID = ?;";
+  sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
+  sqlite3_bind_int(stmt, 1, id);
+  int rc = sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+  return rc == SQLITE_DONE;
+}

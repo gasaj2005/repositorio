@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>UCO Tutorias</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
-    <header><h1>Acceso al Sistema de Tutorias</h1></header>
+    <header>
+        <h1>Acceso al Sistema de Tutorias</h1>
+    </header>
     <div class="container" style="text-align:center; margin-top:50px;">
         <input type="text" id="email" placeholder="Correo (@uco.es)"><br>
         <input type="password" id="password" placeholder="Contrasena"><br>
@@ -18,10 +22,10 @@
             const password = document.getElementById('password').value;
             const res = await fetch('/api/login', {
                 method: 'POST',
-                body: JSON.stringify({email, password})
+                body: JSON.stringify({ email, password })
             });
             const data = await res.json();
-            if(data.success) {
+            if (data.success) {
                 // Save ID for session simulation
                 localStorage.setItem('userId', data.id);
                 localStorage.setItem('role', data.role);
@@ -32,4 +36,5 @@
         }
     </script>
 </body>
+
 </html>

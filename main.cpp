@@ -5,7 +5,6 @@
 #include "src/models/Tutor.h"
 #include "src/models/Usuario.h"
 
-
 int main() {
   Database db("app.db");
   if (!db.init()) {
@@ -210,6 +209,7 @@ int main() {
     crow::json::wvalue x;
     int i = 0;
     for (auto &m : history) {
+      x["msgs"][i]["id"] = m.id;
       x["msgs"][i]["from"] = m.remitenteId;
       x["msgs"][i]["content"] = m.contenido;
       x["msgs"][i]["date"] = m.fecha;
@@ -217,6 +217,28 @@ int main() {
     }
     return crow::response(x);
   });
+
+  // --- API: Delete Operations ---
+  CROW_ROUTE(app, "/api/users/delete")
+      .methods(crow::HTTPMethod::POST)([&db](const crow::request &req) {
+        auto x = crow::json::load(req.body);
+        if (!x)
+          return crow::response(400);
+        int id = x["id"].i();
+        bool ok = db.deleteUser(id);
+        return crow::response(ok ? 200 : 500);
+      });
+
+  CROW_ROUTE(app, "/api/chat/delete")
+      .methods(crow::HTTPMethod::POST)([&db](const crow::request &req) {
+        auto x = crow::json::load(req.body);
+        if (!x) {
+          return crow::response(400);
+        }
+        int id = x["id"].i();
+        bool ok = db.deleteMessage(id);
+        return crow::response(ok ? 200 : 500);
+      });
 
   char *portStr = std::getenv("PORT");
   int port = 18080;

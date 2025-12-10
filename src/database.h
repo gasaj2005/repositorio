@@ -61,6 +61,10 @@ public:
                       const std::string &contenido);
   std::vector<MensajeChat> getChatHistory(int userId1, int userId2);
   std::vector<MensajeChat> getAllChats(); // For Coordinator
+
+  // Deletion
+  bool deleteUser(int id);
+  bool deleteMessage(int id);
 };
 
 #endif // DATABASE_H

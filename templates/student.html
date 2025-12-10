@@ -55,13 +55,36 @@
             div.innerHTML = '';
             if (data.msgs) {
                 data.msgs.forEach(m => {
-                    const style = m.from === myId ? 'text-align:right; background:#dcf8c6;' : 'background:#fff;';
+                    const isMe = m.from === myId;
+                    const style = isMe ? 'text-align:right; background:#dcf8c6;' : 'background:#fff;';
+                    // Add delete button if it's my message
+                    const delBtn = isMe ? `<button onclick="deleteMsg(${m.id})" style="font-size:0.8em; margin-left:5px; color:red;">x</button>` : '';
+
                     div.innerHTML += `<div class="msg" style="${style} padding:5px; margin:2px;">
-                         <b>${m.from === myId ? 'Yo' : 'Tutor'}:</b> ${m.content}
+                         <b>${isMe ? 'Yo' : 'Tutor'}:</b> ${m.content} ${delBtn}
                     </div>`;
                 });
                 div.scrollTop = div.scrollHeight;
             }
+        }
+
+        async function deleteMsg(id) {
+            if (!confirm("Borrar mensaje?")) return;
+            try {
+                const res = await fetch('/api/chat/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                if (res.ok) {
+                    // alert("Mensaje borrado");
+                } else {
+                    alert("Error al borrar el mensaje");
+                }
+            } catch (e) {
+                alert("Error de red: " + e);
+            }
+            loadChat();
         }
 
         async function sendMsg() {

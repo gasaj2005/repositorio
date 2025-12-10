@@ -14,7 +14,7 @@
     <div class="container">
         <!-- HU1.1 & HU1.2 -->
         <div class="section">
-            <h2>Gestion de Usuarios (HU1)</h2>
+            <h2>Gestion de Usuarios</h2>
             <div style="background:#eee; padding:10px;">
                 <h3>Registrar Nuevo Usuario</h3>
                 <select id="newRole">
@@ -36,6 +36,7 @@
                         <th>Nombre</th>
                         <th>Rol/Info</th>
                         <th>Tutor ID</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="userTable"></tbody>
@@ -44,10 +45,10 @@
 
         <!-- HU2.1 & HU2.2 -->
         <div class="section">
-            <h2>Asignacion de Tutores (HU2)</h2>
-            <button onclick="autoAssign()">Asignar Automaticamente (HU2.1)</button>
+            <h2>Asignacion de Tutores</h2>
+            <button onclick="autoAssign()">Asignar Automaticamente</button>
             <div style="margin-top:10px;">
-                <h3>Asignacion Manual (HU2.2)</h3>
+                <h3>Asignacion Manual</h3>
                 <input type="number" id="manualStuId" placeholder="ID Alumno">
                 <input type="number" id="manualTutId" placeholder="ID Tutor">
                 <button onclick="manualAssign()">Asignar</button>
@@ -56,7 +57,7 @@
 
         <!-- HU3.3 -->
         <div class="section">
-            <h2>Supervision de Chats (HU3.3)</h2>
+            <h2>Supervision de Chats</h2>
             <button onclick="loadAllChats()">Cargar Historial Completo</button>
             <div id="allChats" class="chat-window" style="height:200px;"></div>
         </div>
@@ -73,11 +74,23 @@
 
             // Tutors
             if (data.tutors) data.tutors.forEach(t => {
-                tbody.innerHTML += `<tr><td>${t.id}</td><td>${t.nombre}</td><td>Tutor (Disp: ${t.disponible})</td><td>-</td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td>${t.id}</td>
+                    <td>${t.nombre}</td>
+                    <td>Tutor (Disp: ${t.disponible})</td>
+                    <td>-</td>
+                    <td><button onclick="deleteUser(${t.id})">Eliminar</button></td>
+                </tr>`;
             });
             // Students
             if (data.alumnos) data.alumnos.forEach(a => {
-                tbody.innerHTML += `<tr><td>${a.id}</td><td>${a.nombre}</td><td>Alumno (${a.carrera})</td><td>${a.tutorId}</td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td>${a.id}</td>
+                    <td>${a.nombre}</td>
+                    <td>Alumno (${a.carrera})</td>
+                    <td>${a.tutorId}</td>
+                    <td><button onclick="deleteUser(${a.id})">Eliminar</button></td>
+                </tr>`;
             });
         }
 
@@ -94,6 +107,15 @@
             await fetch('/api/users/add', {
                 method: 'POST',
                 body: JSON.stringify(body)
+            });
+            loadUsers();
+        }
+
+        async function deleteUser(id) {
+            if (!confirm("Seguro que quieres borrar este usuario? Esto borrara tambien sus mensajes y asignaciones.")) return;
+            await fetch('/api/users/delete', {
+                method: 'POST',
+                body: JSON.stringify({ id: id })
             });
             loadUsers();
         }
