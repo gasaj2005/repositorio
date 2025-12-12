@@ -12,8 +12,20 @@
         <button onclick="logout()">Cerrar Sesion</button>
     </header>
     <div class="container">
-        <!-- HU1.1 & HU1.2 -->
-        <div class="section">
+        <!-- Main Menu -->
+        <div id="main-menu" class="section center-menu" style="text-align:center;">
+            <h2>Bienvenido al Panel de Coordinador</h2>
+            <p>Seleccione una opcion:</p>
+            <div class="menu-grid">
+                <button class="menu-btn" onclick="showSection('sec-users')">Gestion de Usuarios</button>
+                <button class="menu-btn" onclick="showSection('sec-assign')">Asignacion de Tutores</button>
+                <button class="menu-btn" onclick="showSection('sec-chats')">Supervision de Chats</button>
+            </div>
+        </div>
+
+        <!-- HU1.1 & HU1.2: Users -->
+        <div id="sec-users" class="section" style="display:none;">
+            <button onclick="showSection('main-menu')" style="margin-bottom:10px;">&larr; Volver al Menu</button>
             <h2>Gestion de Usuarios</h2>
             <div style="background:#eee; padding:10px;">
                 <h3>Registrar Nuevo Usuario</h3>
@@ -43,8 +55,9 @@
             </table>
         </div>
 
-        <!-- HU2.1 & HU2.2 -->
-        <div class="section">
+        <!-- HU2.1 & HU2.2: Assign -->
+        <div id="sec-assign" class="section" style="display:none;">
+            <button onclick="showSection('main-menu')" style="margin-bottom:10px;">&larr; Volver al Menu</button>
             <h2>Asignacion de Tutores</h2>
             <button onclick="autoAssign()">Asignar Automaticamente</button>
             <div style="margin-top:10px;">
@@ -59,8 +72,9 @@
             </div>
         </div>
 
-        <!-- HU3.3 -->
-        <div class="section">
+        <!-- HU3.3: Chats -->
+        <div id="sec-chats" class="section" style="display:none;">
+            <button onclick="showSection('main-menu')" style="margin-bottom:10px;">&larr; Volver al Menu</button>
             <h2>Supervision de Chats</h2>
             <button onclick="loadAllChats()">Cargar Historial Completo</button>
             <div id="allChats" class="chat-window" style="height:200px;"></div>
@@ -69,6 +83,16 @@
 
     <script>
         function logout() { localStorage.clear(); window.location.href = '/'; }
+
+        function showSection(id) {
+            // Hide all
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('sec-users').style.display = 'none';
+            document.getElementById('sec-assign').style.display = 'none';
+            document.getElementById('sec-chats').style.display = 'none';
+            // Show target
+            document.getElementById(id).style.display = 'block';
+        }
 
         async function loadUsers() {
             const res = await fetch('/api/users');
@@ -83,10 +107,11 @@
 
             // Tutors
             if (data.tutors) data.tutors.forEach(t => {
+                const dispText = t.disponible ? "Disponible" : "No Disponible";
                 tbody.innerHTML += `<tr>
                     <td>${t.id}</td>
                     <td>${t.nombre}</td>
-                    <td>Tutor (Disp: ${t.disponible})</td>
+                    <td>Tutor (${dispText})</td>
                     <td>-</td>
                     <td><button onclick="deleteUser(${t.id})">Eliminar</button></td>
                 </tr>`;
