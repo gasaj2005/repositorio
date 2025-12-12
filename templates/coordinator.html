@@ -49,8 +49,12 @@
             <button onclick="autoAssign()">Asignar Automaticamente</button>
             <div style="margin-top:10px;">
                 <h3>Asignacion Manual</h3>
-                <input type="number" id="manualStuId" placeholder="ID Alumno">
-                <input type="number" id="manualTutId" placeholder="ID Tutor">
+                <select id="manualStuId">
+                    <option value="">Cargando alumnos...</option>
+                </select>
+                <select id="manualTutId">
+                    <option value="">Cargando tutores...</option>
+                </select>
                 <button onclick="manualAssign()">Asignar</button>
             </div>
         </div>
@@ -70,7 +74,12 @@
             const res = await fetch('/api/users');
             const data = await res.json();
             const tbody = document.getElementById('userTable');
+            const selStu = document.getElementById('manualStuId');
+            const selTut = document.getElementById('manualTutId');
+
             tbody.innerHTML = '';
+            selStu.innerHTML = '<option value="">Seleccionar Alumno</option>';
+            selTut.innerHTML = '<option value="">Seleccionar Tutor</option>';
 
             // Tutors
             if (data.tutors) data.tutors.forEach(t => {
@@ -81,6 +90,8 @@
                     <td>-</td>
                     <td><button onclick="deleteUser(${t.id})">Eliminar</button></td>
                 </tr>`;
+                // Add to manual assign dropdown
+                selTut.innerHTML += `<option value="${t.id}">${t.nombre} (ID:${t.id})</option>`;
             });
             // Students
             if (data.alumnos) data.alumnos.forEach(a => {
@@ -91,23 +102,47 @@
                     <td>${a.tutorId}</td>
                     <td><button onclick="deleteUser(${a.id})">Eliminar</button></td>
                 </tr>`;
+                // Add to manual assign dropdown
+                selStu.innerHTML += `<option value="${a.id}">${a.nombre} (ID:${a.id})</option>`;
             });
         }
 
         async function addUser() {
             const role = document.getElementById('newRole').value;
-            const body = {
-                role: role,
-                nombre: document.getElementById('newName').value,
-                apellidos: document.getElementById('newSurname').value,
-                email: document.getElementById('newEmail').value,
-                password: document.getElementById('newPass').value,
-                carrera: document.getElementById('newDegree').value
-            };
+            const nombre = document.getElementById('newName').value.trim();
+            const apellidos = document.getElementById('newSurname').value.trim();
+            const email = document.getElementById('newEmail').value.trim();
+            const password = document.getElementById('newPass').value.trim();
+            const carrera = document.getElementById('newDegree').value.trim();
+
+            let missing = [];
+            if (!nombre) missing.push("Nombre");
+            if (!apellidos) missing.push("Apellidos");
+            if (!email) missing.push("Correo");
+            if (!password) missing.push("Contrasena");
+            if (role === 'Alumno' && !carrera) missing.push("Carrera");
+
+            if (missing.length > 0) {
+                alert("Error: Debe rellenar los campos obligatorios: " + missing.join(", "));
+                return;
+            }
+
+            if (role === 'Tutor' && carrera) {
+                alert("Error: Un Tutor no debe tener carrera asignada.");
+                return;
+            }
+
+            if (!email.endsWith('@uco.es')) {
+                alert("Error: El correo debe ser institucional (@uco.es).");
+                return;
+            }
+
+            const body = { role, nombre, apellidos, email, password, carrera };
             await fetch('/api/users/add', {
                 method: 'POST',
                 body: JSON.stringify(body)
             });
+            // Clear fields ?
             loadUsers();
         }
 
@@ -121,17 +156,39 @@
         }
 
         async function autoAssign() {
+            // Client-side check if everyone is already assigned
+            // We need to peek at the logic or just fetch again to be sure
+            const res = await fetch('/api/users');
+            const data = await res.json();
+            let allAssigned = true;
+            if (data.alumnos) {
+                for (let a of data.alumnos) {
+                    if (a.tutorId === -1) {
+                        allAssigned = false;
+                        break;
+                    }
+                }
+            }
+            if (allAssigned) {
+                alert("Ya se han asignado todos los usuarios");
+                return;
+            }
+
             await fetch('/api/assign', { method: 'POST', body: JSON.stringify({ auto: true }) });
             loadUsers();
             alert('Asignacion automatica completada');
         }
 
         async function manualAssign() {
-            const sid = parseInt(document.getElementById('manualStuId').value);
-            const tid = parseInt(document.getElementById('manualTutId').value);
+            const sid = document.getElementById('manualStuId').value;
+            const tid = document.getElementById('manualTutId').value;
+            if (!sid || !tid) {
+                alert("Seleccione un alumno y un tutor");
+                return;
+            }
             await fetch('/api/assign', {
                 method: 'POST',
-                body: JSON.stringify({ auto: false, studentId: sid, tutorId: tid })
+                body: JSON.stringify({ auto: false, studentId: parseInt(sid), tutorId: parseInt(tid) })
             });
             loadUsers();
         }
