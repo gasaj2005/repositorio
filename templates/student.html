@@ -99,7 +99,12 @@
             loadChat();
         }
 
-        setInterval(loadChat, 3000);
+        // Send on Enter
+        document.getElementById('msgInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMsg();
+        });
+
+        setInterval(loadChat, 1000);
         getMyTutor();
     </script>
 </body>

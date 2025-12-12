@@ -34,6 +34,14 @@
                 document.getElementById('error').innerText = "Credenciales incorrectas";
             }
         }
+
+        // Enter key support
+        document.getElementById('email').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') login();
+        });
+        document.getElementById('password').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') login();
+        });
     </script>
 </body>
 
