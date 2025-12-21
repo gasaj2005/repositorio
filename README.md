@@ -15,7 +15,7 @@ Se ha usado el IDE Visual Studio Code en el lenguaje de programación C++
 
 Arquitectura: 
 
-Interfaz: se ha empleado una interfaz gráfica para una mayor comodidad para el usuario
+Se ha empleado una interfaz gráfica para una acceder y modificar fácilmente la base de datos
 
 
 
