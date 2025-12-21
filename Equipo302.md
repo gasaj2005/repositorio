@@ -1,6 +1,4 @@
-# repositorio 
-Introducción 
-
+# Repositorio Equipo 302
 
 
 # Implementación (especificaciones)
